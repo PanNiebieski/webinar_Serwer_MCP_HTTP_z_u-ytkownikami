@@ -1,0 +1,19 @@
+name: Docker Obsidian MCP Server
+version: 0.0.1
+schema: v1
+
+mcpServers:
+  - name: obsidian
+    command: docker
+    args:
+      - run
+      - -i
+      - --rm
+      - -e
+      - OBSIDIAN_HOST
+      - -e
+      - OBSIDIAN_API_KEY
+      - mcp/obsidian
+    env:
+      OBSIDIAN_HOST: host.docker.internal
+      OBSIDIAN_API_KEY: "5114bc30a99d4910d40d1812759d0ff61c9b0a0c3bfd3de8b9ec868753fea28c"

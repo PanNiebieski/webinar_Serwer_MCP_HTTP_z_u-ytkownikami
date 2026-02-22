@@ -1,0 +1,12 @@
+name: YouTube Transcript MCP Server
+version: 0.0.1
+schema: v1
+
+mcpServers:
+  - name: youtube_transcript
+    command: docker
+    args :
+      - run
+      - -i
+      - --rm
+      - mcp/youtube-transcript
