@@ -2336,29 +2336,11 @@ Napiszmy serwer HTTP MCP w C# z autoryzacją użytkownika.
     <section class="slide prism over bhgry">
         <div class="grid-container">
             <div class="HeaderTitle GG"> 
-                <h2 class="headerCODE GG">Przykład ExcelService</h2>
+                <h2 class="headerCODE GG">UserContext coś co reprezentuje naszego użytkownika</h2>
             </div>
             <div class="PlaceCodeHere canscroll">
                 <pre style="font-size: 22px;overflow: hidden;  " class="language-cs">
                     <code style="line-height:22px !important;">
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
                         namespace CompanyDocuments.Common.Services;
@@ -2385,11 +2367,1353 @@ Napiszmy serwer HTTP MCP w C# z autoryzacją użytkownika.
             </div>
         </div>
     </section>
-
-                <section class="slide creammBBBGragient  deepbluetext">
-        <span class="shout colors" ><span>A teraz ogłoszenia
+                <section class="slide creamGGGragient orangetext " >
+        <span class="shout colors" ><span>Napisanie sprawdzania czy ktoś ma dostęp do danych jest proste
         </span></span>
     </section>
+            <section class="slide" style="background-color:black">
+        <figure>
+            <img class="cover" src="pictures/new_slides/1.png" alt="blog">
+            <figcaption class="white">CW</figcaption>
+        </figure>
+    </section>
+                <section class="slide" style="background-color:black">
+        <figure>
+            <img class="cover" src="pictures/new_slides/2.png" alt="blog">
+            <figcaption class="white">CW</figcaption>
+        </figure>
+    </section>
+                    <section class="slide" style="background-color:black">
+        <figure>
+            <img class="cover" src="pictures/new_slides/3.png" alt="blog">
+            <figcaption class="white">CW</figcaption>
+        </figure>
+    </section>
+                            <section class="slide" style="background-color:black">
+        <figure>
+            <img class="cover" src="pictures/new_slides/4.png" alt="blog">
+            <figcaption class="white">CW</figcaption>
+        </figure>
+    </section>
+        <section class="slide prism over bhgry">
+        <div class="grid-container">
+            <div class="HeaderTitle GG"> 
+                <h2 class="headerCODE GG">UserContext coś co reprezentuje naszego użytkownika</h2>
+            </div>
+            <div class="PlaceCodeHere canscroll">
+                <pre style="font-size: 18px;overflow: hidden;  " class="language-cs">
+                    <code style="line-height:18px !important;">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                        namespace CompanyDocuments.Common.Services;
+
+                        public sealed class ReportService
+                        {
+                        // Static report registry — each report has required role
+                        private static readonly Dictionary&lt;string, ReportDefinition&gt; Reports = 
+                            new(StringComparer.OrdinalIgnoreCase)
+                        {
+                            [&quot;financial-q1&quot;] = new(
+                                &quot;financial-q1&quot;,
+                                &quot;Raport finansowy Q1 2025&quot;,
+                                UserRole.Manager,
+                                &quot;Przychody: 334 500 PLN | Koszty: 198 700 PLN | Zysk: 135 800 PLN | Marża: 40.6%&quot;),
+
+                            [&quot;financial-q2&quot;] = new(
+                                &quot;financial-q2&quot;,
+                                &quot;Raport finansowy Q2 2025&quot;,
+                                UserRole.Manager,
+                                &quot;Przychody: 357 000 PLN | Koszty: 224 500 PLN | Zysk: 132 500 PLN | Marża: 37.1%&quot;),
+
+                            [&quot;salary-report&quot;] = new(
+                                &quot;salary-report&quot;,
+                                &quot;Zestawienie wynagrodzeń&quot;,
+                                UserRole.Manager,
+                                &quot;Średnia: 14 200 PLN | Mediana: 12 800 PLN | Min: 7 500 PLN | Max: 28 000 PLN&quot;),
+
+                            [&quot;team-tasks&quot;] = new(
+                                &quot;team-tasks&quot;,
+                                &quot;Zadania zespołu — podsumowanie&quot;,
+                                UserRole.Employee,
+                                &quot;Otwarte: 12 | W trakcie: 8 | Zakończone: 34 | Sprinty: 3&quot;),
+
+                            [&quot;my-timesheet-summary&quot;] = new(
+                                &quot;my-timesheet-summary&quot;,
+                                &quot;Podsumowanie godzin pracy&quot;,
+                                UserRole.Employee,
+                                &quot;Czerwiec 2025 — Przepracowane: 168h | Nadgodziny: 12h | Urlop: 0 dni&quot;)
+                        };
+
+                        /// &lt;summary&gt;
+                        /// Returns all reports with access information for the given user role.
+                        /// Reports the user cannot access are still listed — but marked as denied.
+                        /// &lt;/summary&gt;
+                        public Task&lt;List&lt;ReportAccessResult&gt;&gt; GetReportsForUserAsync(UserRole userRole)
+                        {
+                            var results = Reports.Values.Select(r =&gt;
+                            {
+                                bool hasAccess = userRole &gt;= r.RequiredRole;
+
+                                return new ReportAccessResult(
+                                    ReportId: r.Id,
+                                    Title: r.Title,
+                                    HasAccess: hasAccess,
+                                    Content: hasAccess ? r.Content : null,
+                                    DeniedReason: hasAccess
+                                        ? null
+                                        : $&quot;Brak dostępu. Wymagana rola: {r.RequiredRole}. Twoja rola: {userRole}.&quot;);
+                            }).ToList();
+
+                            return Task.FromResult(results);
+                        }
+
+                        /// &lt;summary&gt;
+                        /// Get a single report by ID with access check.
+                        /// &lt;/summary&gt;
+                        public Task&lt;ReportAccessResult&gt; GetReportByIdAsync(string reportId, UserRole userRole)
+                        {
+                            if (!Reports.TryGetValue(reportId, out var report))
+                            {
+                                return Task.FromResult(new ReportAccessResult(
+                                    ReportId: reportId,
+                                    Title: &quot;Nieznany raport&quot;,
+                                    HasAccess: false,
+                                    Content: null,
+                                    DeniedReason: $&quot;Raport &#39;{reportId}&#39; nie istnieje.&quot;));
+                            }
+
+                            bool hasAccess = userRole &gt;= report.RequiredRole;
+
+                            return Task.FromResult(new ReportAccessResult(
+                                ReportId: report.Id,
+                                Title: report.Title,
+                                HasAccess: hasAccess,
+                                Content: hasAccess ? report.Content : null,
+                                DeniedReason: hasAccess
+                                    ? null
+                                    : $&quot;Raport &#39;{report.Title}&#39; istnieje, ale nie masz do niego dostępu. 
+                                    Wymagana rola: {report.RequiredRole}. Twoja rola: {userRole}.&quot;));
+                        }
+                        }
+
+                        public sealed record ReportDefinition(
+                        string Id,
+                        string Title,
+                        UserRole RequiredRole,
+                        string Content);
+
+                        public sealed record ReportAccessResult(
+                        string ReportId,
+                        string Title,
+                        bool HasAccess,
+                        string? Content,
+                        string? DeniedReason);
+
+                    </code>
+                </pre>
+            </div>
+        </div>
+    </section>
+    <section class="slide prism over bhgry">
+        <div class="grid-container">
+            <div class="HeaderTitle GG"> 
+                <h2 class="headerCODE GG">UserContext coś co reprezentuje naszego użytkownika</h2>
+            </div>
+            <div class="PlaceCodeHere canscroll">
+                <pre style="font-size: 18px;overflow: hidden;  " class="language-cs">
+                    <code style="line-height:18px !important;">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                        //  REPORT TOOLS — [RequireRole(Employee)]
+                        //  Visible to everyone authenticated.
+                        //  The tool itself shows all reports, but content is role-gated.
+
+                        [McpServerToolType]
+                        [RequireRole(UserRole.Employee)]
+                        public sealed class ReportTools(
+                            IHttpContextAccessor httpContextAccessor,
+                            ReportService reportService)
+                        {
+                            private UserContext User =&gt; 
+                                (httpContextAccessor.HttpContext?.Items[&quot;UserContext&quot;] as UserContext)!;
+
+                            [McpServerTool, Description(
+                                &quot;List all available reports. Shows which reports you have access to &quot; +
+                                &quot;and which are restricted based on your role.&quot;)]
+                            public async Task&lt;string&gt; GetReports()
+                            {
+                                var reports = await reportService.GetReportsForUserAsync(User.Role);
+                                return McpJson.Serialize(new
+                                {
+                                    success = true,
+                                    user = User.Name,
+                                    role = User.Role.ToString(),
+                                    totalReports = reports.Count,
+                                    accessibleReports = reports.Count(r =&gt; r.HasAccess),
+                                    deniedReports = reports.Count(r =&gt; !r.HasAccess),
+                                    reports
+                                });
+                            }
+
+                            [McpServerTool, Description(
+                                &quot;Get a specific report by ID. Returns content if authorized, &quot; +
+                                &quot;or an access-denied message with the required role.&quot;)]
+                            public async Task&lt;string&gt; GetReportById(
+                                [Description(&quot;Report ID (e.g. financial-q1, team-tasks, salary-report)&quot;)] string reportId)
+                            {
+                                var report = await reportService.GetReportByIdAsync(reportId, User.Role);
+                                return McpJson.Serialize(new
+                                {
+                                    success = report.HasAccess,
+                                    user = User.Name,
+                                    role = User.Role.ToString(),
+                                    report
+                                });
+                            }
+                        }
+
+                    </code>
+                </pre>
+            </div>
+        </div>
+    </section>
+                        <section class="slide" style="background-color:black">
+        <figure>
+            <img class="cover" src="pictures/new_slides/4.png" alt="blog">
+            <figcaption class="white">CW</figcaption>
+        </figure>
+    </section>
+                    <section class="slide creammBBBGragient  deepbluetext">
+        <span class="shout colors" ><span>Oto nasze wyzwanie z MCP
+        </span></span>
+    </section>
+                        <section class="slide" style="background-color:black">
+        <figure>
+            <img class="cover" src="pictures/new_slides/6.png" alt="blog">
+            <figcaption class="white">CW</figcaption>
+        </figure>
+    </section>
+                            <section class="slide" style="background-color:black">
+        <figure>
+            <img class="cover" src="pictures/new_slides/7.png" alt="blog">
+            <figcaption class="white">CW</figcaption>
+        </figure>
+    </section>
+    <section class="slide" style="background-color:black">
+        <figure>
+            <img class="cover" src="pictures/new_slides/8.png" alt="blog">
+            <figcaption class="white">CW</figcaption>
+        </figure>
+    </section>
+        <section class="slide" style="background-color:black">
+        <figure>
+            <img class="cover" src="pictures/new_slides/9.png" alt="blog">
+            <figcaption class="white">CW</figcaption>
+        </figure>
+    </section>
+        <section class="slide" style="background-color:black">
+        <figure>
+            <img class="cover" src="pictures/new_slides/10.png" alt="blog">
+            <figcaption class="white">CW</figcaption>
+        </figure>
+    </section>
+                    <section class="slide creammBBBGragient  deepbluetext">
+        <span class="shout colors" ><span>Jak chcemy aby to działało?
+        </span></span>
+    </section>
+            <section class="slide" style="background-color:black">
+        <figure>
+            <img class="cover" src="pictures/new_slides/11.png" alt="blog">
+            <figcaption class="white">CW</figcaption>
+        </figure>
+    </section>
+                <section class="slide" style="background-color:black">
+        <figure>
+            <img class="cover" src="pictures/new_slides/12.png" alt="blog">
+            <figcaption class="white">CW</figcaption>
+        </figure>
+    </section>
+                    <section class="slide" style="background-color:black">
+        <figure>
+            <img class="cover" src="pictures/new_slides/13.png" alt="blog">
+            <figcaption class="white">CW</figcaption>
+        </figure>
+    </section>
+                <section class="slide creammBBBGragient  deepbluetext">
+        <span class="shout colors" ><span>Oto jak to zrobić w kodzie
+        </span></span>
+    </section>
+                    <section class="slide creammBBBGragient  deepbluetext">
+        <span class="shout colors" ><span>Oto nasze serwisy
+        </span></span>
+    </section>
+            <section class="slide prism over bhgry">
+        <div class="grid-container">
+            <div class="HeaderTitle GG"> 
+                <h2 class="headerCODE GG">UserContext coś co reprezentuje naszego użytkownika</h2>
+            </div>
+            <div class="PlaceCodeHere canscroll">
+                <pre style="font-size: 17px;overflow: hidden;  " class="language-cs">
+                    <code style="line-height:17px !important;">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                        
+
+
+
+
+
+                        public sealed class EmployeeService
+                        {
+                            public Task&lt;List&lt;Employee&gt;&gt; GetEmployeeListAsync() =&gt;
+                                Task.FromResult&lt;List&lt;Employee&gt;&gt;(
+                                [
+                                    new(1, &quot;Jan Nowak&quot;,      &quot;Developer&quot;,        &quot;IT&quot;),
+                                    new(2, &quot;Maria Wiśniewska&quot;, &quot;QA Engineer&quot;,    &quot;IT&quot;),
+                                    new(3, &quot;Piotr Zieliński&quot;, &quot;Project Manager&quot;, &quot;PMO&quot;),
+                                    new(4, &quot;Katarzyna Dąbrowska&quot;, &quot;HR Specialist&quot;, &quot;HR&quot;)
+                                ]);
+                        }
+
+                        public sealed record Employee(
+                            int Id,
+                            string Name,
+                            string Position,
+                            string Department);
+
+
+                        public sealed class FinancialService
+                        {
+                            public Task&lt;FinancialSummary&gt; GetFinancialSummaryAsync() =&gt;
+                                Task.FromResult(new FinancialSummary(
+                                    Revenue: 691_500m,
+                                    Costs: 423_200m,
+                                    Profit: 268_300m,
+                                    Currency: &quot;PLN&quot;,
+                                    Period: &quot;H1-2025&quot;));
+                        }
+
+                        public sealed record FinancialSummary(
+                            decimal Revenue,
+                            decimal Costs,
+                            decimal Profit,
+                            string Currency,
+                            string Period);
+
+                        public sealed class SalesService
+                        {
+                            public Task&lt;List&lt;SaleRecord&gt;&gt; GetSalesReportAsync() =&gt;
+                                Task.FromResult&lt;List&lt;SaleRecord&gt;&gt;(
+                                [
+                                    new(&quot;Q1-2025&quot;, &quot;Licencje Enterprise&quot;, 245_000m, &quot;PLN&quot;),
+                                    new(&quot;Q1-2025&quot;, &quot;Usługi konsultingowe&quot;, 89_500m, &quot;PLN&quot;),
+                                    new(&quot;Q2-2025&quot;, &quot;Licencje Enterprise&quot;, 312_000m, &quot;PLN&quot;),
+                                    new(&quot;Q2-2025&quot;, &quot;Szkolenia&quot;, 45_000m, &quot;PLN&quot;)
+                                ]);
+                        }
+
+                        public sealed record SaleRecord(
+                            string Period,
+                            string Product,
+                            decimal Amount,
+                            string Currency);
+
+
+                        namespace CompanyDocuments.Common.Services;
+
+                        public sealed class TaskService
+                        {
+                            // In real app: filter by userId from DB
+                            public Task&lt;List&lt;WorkTask&gt;&gt; GetTasksForUserAsync(string userId) =&gt;
+                                Task.FromResult&lt;List&lt;WorkTask&gt;&gt;(
+                                [
+                                    new(101, &quot;Przygotować prezentację MCP&quot;,   &quot;InProgress&quot;, &quot;2025-06-15&quot;),
+                                    new(102, &quot;Code review PR #247&quot;,            &quot;Todo&quot;,       &quot;2025-06-12&quot;),
+                                    new(103, &quot;Aktualizacja dokumentacji API&quot;,  &quot;Done&quot;,       &quot;2025-06-10&quot;)
+                                ]);
+
+                            public Task&lt;TimesheetConfirmation&gt; SubmitTimesheetAsync(
+                                string userId, string date, decimal hours, string description) =&gt;
+                                Task.FromResult(new TimesheetConfirmation(
+                                    Id: Guid.NewGuid().ToString(&quot;N&quot;)[..8],
+                                    UserId: userId,
+                                    Date: date,
+                                    Hours: hours,
+                                    Description: description,
+                                    Status: &quot;Submitted&quot;));
+                        }
+
+                        public sealed record WorkTask(
+                            int Id,
+                            string Title,
+                            string Status,
+                            string DueDate);
+
+                        public sealed record TimesheetConfirmation(
+                            string Id,
+                            string UserId,
+                            string Date,
+                            decimal Hours,
+                            string Description,
+                            string Status);
+                    </code>
+                </pre>
+            </div>
+        </div>
+    </section>
+    <section class="slide creammBBBGragient  deepbluetext">
+        <span class="shout colors" ><span>Tworzymy atrybut, który będzie nam mówił jakie role są wymagane do korzystania z narzędzia
+        </span></span>
+    </section>
+        <section class="slide prism over bhgry">
+        <div class="grid-container">
+            <div class="HeaderTitle GG"> 
+                <h2 class="headerCODE GG">UserContext coś co reprezentuje naszego użytkownika</h2>
+            </div>
+            <div class="PlaceCodeHere canscroll">
+                <pre style="font-size: 24px;overflow: hidden;  " class="language-cs">
+                    <code style="line-height:24px !important;">
+
+                        /// &lt;summary&gt;
+                        /// Marks an MCP tool class as requiring a specific role.
+                        /// Used by RoleBasedToolProvider to filter tools per user.
+                        /// &lt;/summary&gt;
+                        [AttributeUsage(AttributeTargets.Class, Inherited = false)]
+                        public sealed class RequireRoleAttribute(UserRole minimumRole) 
+                            : Attribute
+                        {
+                            public UserRole MinimumRole { get; } = minimumRole;
+                        }
+
+                    </code>
+                </pre>
+            </div>
+        </div>
+    </section>
+        <section class="slide creammBBBGragient  deepbluetext">
+        <span class="shout colors" ><span>Oto użycie tego atrybutu w praktyce
+        </span></span>
+    </section>
+            <section class="slide prism over bhgry">
+        <div class="grid-container">
+            <div class="HeaderTitle GG"> 
+                <h2 class="headerCODE GG">MCP wydzielone w zależności od roli</h2>
+            </div>
+            <div class="PlaceCodeHere canscroll">
+                <pre style="font-size: 20px;overflow: hidden;  " class="language-cs">
+                    <code style="line-height:20px !important;">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                        //  MANAGER TOOLS — [RequireRole(Manager)]
+                        //  These tools are completely invisible to Employee users.
+                        //  They won&#39;t even show up in tools/list.
+
+                        [McpServerToolType]
+                        [RequireRole(UserRole.Manager)]
+                        public sealed class ManagerTools(
+                            IHttpContextAccessor httpContextAccessor,
+                            SalesService salesService,
+                            EmployeeService employeeService,
+                            FinancialService financialService)
+                        {
+                            private UserContext User =&gt; (httpContextAccessor.HttpContext?.Items[&quot;UserContext&quot;] as UserContext)!;
+
+                            [McpServerTool, Description(&quot;Get sales report with revenue data per quarter and product.&quot;)]
+                            public async Task&lt;string&gt; GetSalesReport()
+                            {
+                                var data = await salesService.GetSalesReportAsync();
+                                return McpJson.Serialize(new { success = true, user = User.Name, report = &quot;Sales Report&quot;, records = data });
+                            }
+
+                            [McpServerTool, Description(&quot;Get list of all employees with their positions and departments.&quot;)]
+                            public async Task&lt;string&gt; GetEmployeeList()
+                            {
+                                var data = await employeeService.GetEmployeeListAsync();
+                                return McpJson.Serialize(new { success = true, user = User.Name, report = &quot;Employee List&quot;, employees = data });
+                            }
+
+                            [McpServerTool, Description(&quot;Get financial summary including revenue, costs and profit.&quot;)]
+                            public async Task&lt;string&gt; GetFinancialSummary()
+                            {
+                                var data = await financialService.GetFinancialSummaryAsync();
+                                return McpJson.Serialize(new { success = true, user = User.Name, report = &quot;Financial Summary&quot;, summary = data });
+                            }
+                        }
+
+                        //  EMPLOYEE TOOLS — [RequireRole(Employee)]
+                        //  Visible to Employee AND Manager (Manager &gt;= Employee).
+
+                        [McpServerToolType]
+                        [RequireRole(UserRole.Employee)]
+                        public sealed class EmployeeTools(
+                            IHttpContextAccessor httpContextAccessor,
+                            TaskService taskService)
+                        {
+                            private UserContext User =&gt; (httpContextAccessor.HttpContext?.Items[&quot;UserContext&quot;] as UserContext)!;
+
+                            [McpServerTool, Description(&quot;Get my current tasks and their statuses.&quot;)]
+                            public async Task&lt;string&gt; GetMyTasks()
+                            {
+                                var data = await taskService.GetTasksForUserAsync(User.UserId);
+                                return McpJson.Serialize(new { success = true, user = User.Name, tasks = data });
+                            }
+
+                            [McpServerTool, Description(&quot;Submit a timesheet entry with worked hours.&quot;)]
+                            public async Task&lt;string&gt; SubmitTimesheet(
+                                [Description(&quot;Date in YYYY-MM-DD format&quot;)] string date,
+                                [Description(&quot;Number of hours worked&quot;)] decimal hours,
+                                [Description(&quot;Description of work performed&quot;)] string description)
+                            {
+                                var result = await taskService.SubmitTimesheetAsync(User.UserId, date, hours, description);
+                                return McpJson.Serialize(new { success = true, user = User.Name, confirmation = result });
+                            }
+                        }
+
+                        //  Shared JSON helper
+
+                        internal static class McpJson
+                        {
+                            public static readonly JsonSerializerOptions Options = new(JsonSerializerDefaults.Web)
+                            {
+                                WriteIndented = true
+                            };
+
+                            public static string Serialize&lt;T&gt;(T value) =&gt;
+                                JsonSerializer.Serialize(value, Options);
+                        }
+
+
+                    </code>
+                </pre>
+            </div>
+        </div>
+    </section>
+            <section class="slide creammBBBGragient  deepbluetext">
+        <span class="shout colors" ><span>Potrzebujemy oczywiście kodu który będzie filtrował narzędzia na podstawie roli użytkownika
+        </span></span>
+    </section>
+            <section class="slide prism over bhgry">
+        <div class="grid-container">
+            <div class="HeaderTitle GG"> 
+                <h2 class="headerCODE GG">RoleBasedToolProvider</h2>
+            </div>
+            <div class="PlaceCodeHere canscroll">
+                <pre style="font-size: 20px;overflow: hidden;  " class="language-cs">
+                    <code style="line-height:20px !important;">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                        /// &lt;summary&gt;
+                        /// Discovers all [McpServerToolType] classes from the assembly at startup,
+                        /// then filters them per-request based on the user&#39;s role (from Bearer token).
+                        ///
+                        /// Tools decorated with [RequireRole(UserRole.Manager)] are only visible to Managers.
+                        /// Tools without [RequireRole] are visible to all authenticated users.
+                        /// Unauthenticated users see zero tools.
+                        ///
+                        /// IMPORTANT: Because of issue #707 in csharp-sdk, we cannot use .WithTools&lt;T&gt;()
+                        /// together with WithListToolsHandler — registered tools always get appended.
+                        /// Instead, we skip .WithTools&lt;T&gt;() entirely and handle discovery + DI ourselves.
+                        /// &lt;/summary&gt;
+                        public sealed class RoleBasedToolProvider
+                        {
+                            private readonly List&lt;ToolEntry&gt; _allTools;
+
+                            public RoleBasedToolProvider(IServiceProvider serviceProvider)
+                            {
+                                _allTools = DiscoverTools(serviceProvider);
+                            }
+
+                            /// &lt;summary&gt;
+                            /// Returns only the tools the current user is authorized to see.
+                            /// Called from WithListToolsHandler.
+                            /// &lt;/summary&gt;
+                            public IReadOnlyList&lt;McpServerTool&gt; GetToolsForUser(UserContext? user)
+                            {
+                                if (user is null)
+                                    return [];
+
+                                return _allTools
+                                    .Where(t =&gt; user.Role &gt;= t.MinimumRole)
+                                    .Select(t =&gt; t.Tool)
+                                    .ToList();
+                            }
+
+                            /// &lt;summary&gt;
+                            /// Finds a tool by name, but only if the user is authorized.
+                            /// Called from WithCallToolHandler.
+                            /// &lt;/summary&gt;
+                            public McpServerTool? FindTool(string toolName, UserContext? user)
+                            {
+                                if (user is null)
+                                    return null;
+
+                                return _allTools
+                                    .Where(t =&gt; user.Role &gt;= t.MinimumRole)
+                                    .FirstOrDefault(t =&gt; t.Tool.ProtocolTool.Name == toolName)
+                                    ?.Tool;
+                            }
+
+                            // ── Discovery ──────────────────────────────────────────────
+
+                            private static List&lt;ToolEntry&gt; DiscoverTools(IServiceProvider serviceProvider)
+                            {
+                                var toolAssembly = typeof(RoleBasedToolProvider).Assembly;
+                                var entries = new List&lt;ToolEntry&gt;();
+
+                                var options = new McpServerToolCreateOptions
+                                {
+                                    Services = serviceProvider
+                                };
+
+                                var toolTypes = toolAssembly.GetTypes()
+                                    .Where(t =&gt; t.GetCustomAttribute&lt;McpServerToolTypeAttribute&gt;() is not null);
+
+                                foreach (var type in toolTypes)
+                                {
+                                    var minimumRole = type.GetCustomAttribute&lt;RequireRoleAttribute&gt;()?.MinimumRole
+                                                    ?? UserRole.Employee;
+
+                                    var methods = type.GetMethods(
+                                        BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
+
+                                    foreach (var method in methods)
+                                    {
+                                        if (method.GetCustomAttribute&lt;McpServerToolAttribute&gt;() is null)
+                                            continue;
+
+                                        McpServerTool tool;
+
+                                        if (method.IsStatic)
+                                        {
+                                            tool = McpServerTool.Create(method, options);
+                                        }
+                                        else
+                                        {
+                                            // Use the Func&lt;RequestContext, object&gt; overload so SDK
+                                            // resolves the instance from DI on each invocation.
+                                            var capturedType = type;
+                                            tool = McpServerTool.Create(
+                                                method,
+                                                (RequestContext&lt;CallToolRequestParams&gt; ctx) =&gt;
+                                                    ctx.Services!.GetRequiredService(capturedType),
+                                                options);
+                                        }
+
+                                        entries.Add(new ToolEntry(tool, minimumRole));
+                                    }
+                                }
+
+                                return entries;
+                            }
+
+                            private sealed record ToolEntry(McpServerTool Tool, UserRole MinimumRole);
+                        }
+
+                    </code>
+                </pre>
+            </div>
+        </div>
+    </section>
+            <section class="slide creammBBBGragient  deepbluetext">
+        <span class="shout colors" ><span>Przykład użytkowników jako tokeny
+        </span></span>
+    </section>
+
+            <section class="slide prism over bhgry">
+        <div class="grid-container">
+            <div class="HeaderTitle GG"> 
+                <h2 class="headerCODE GG">UserContext coś co reprezentuje naszego użytkownika</h2>
+            </div>
+            <div class="PlaceCodeHere canscroll">
+                <pre style="font-size: 20px;overflow: hidden;  " class="language-cs">
+                    <code style="line-height:20px !important;">
+
+
+
+
+
+
+                        /// &lt;summary&gt;
+                        /// Simple token =&gt; user resolver for demo/presentation purposes.
+                        /// In production this would validate JWT / OAuth tokens.
+                        /// &lt;/summary&gt;
+                        public sealed class TokenUserResolver
+                        {
+                            // Hard-coded demo tokens. Easy to show on a presentation slide
+                            private static readonly Dictionary&lt;string, UserContext&gt; Users = new(StringComparer.OrdinalIgnoreCase)
+                            {
+                                [&quot;manager-token&quot;] = new UserContext
+                                {
+                                    UserId = &quot;user-1&quot;,
+                                    Name = &quot;Anna Kowalska&quot;,
+                                    Role = UserRole.Manager
+                                },
+                                [&quot;employee-token&quot;] = new UserContext
+                                {
+                                    UserId = &quot;user-2&quot;,
+                                    Name = &quot;Jan Nowak&quot;,
+                                    Role = UserRole.Employee
+                                }
+                            };
+
+                            public UserContext? Resolve(string? bearerToken) =&gt;
+                                bearerToken is not null &amp;&amp; Users.TryGetValue(bearerToken, out var user)
+                                    ? user
+                                    : null;
+                        }
+
+                    </code>
+                </pre>
+            </div>
+        </div>
+    </section>
+                <section class="slide creammBBBGragient  deepbluetext">
+        <span class="shout colors" ><span>Serce rozwiązania leży w program.cs
+        </span></span>
+    </section>
+                <section class="slide prism over bhgry">
+        <div class="grid-container">
+            <div class="HeaderTitle GG"> 
+                <h2 class="headerCODE GG">UserContext coś co reprezentuje naszego użytkownika</h2>
+            </div>
+            <div class="PlaceCodeHere canscroll">
+                <pre style="font-size: 20px;overflow: hidden;  " class="language-cs">
+                    <code style="line-height:20px !important;">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                        using CompanyDocuments.BaseMCP;
+                        using CompanyDocuments.Common.Database;
+                        using CompanyDocuments.Common.Services;
+                        using CompanyDocuments.MCPWeb;
+                        using Microsoft.Extensions.Options;
+                        using ModelContextProtocol.Protocol;
+
+                        var builder = WebApplication.CreateBuilder(args);
+
+                        // HttpContextAccessor — needed so MCP tools can read Bearer token
+                        builder.Services.AddHttpContextAccessor();
+
+                        // Auth: token → UserContext resolver
+                        builder.Services.AddSingleton&lt;TokenUserResolver&gt;();
+
+                        // Pseudo services for demo
+                        builder.Services.AddSingleton&lt;SalesService&gt;();
+                        builder.Services.AddSingleton&lt;EmployeeService&gt;();
+                        builder.Services.AddSingleton&lt;FinancialService&gt;();
+                        builder.Services.AddSingleton&lt;TaskService&gt;();
+                        builder.Services.AddSingleton&lt;ReportService&gt;();
+
+                        // Tool class DI registrations (needed for instance-method tool creation)
+                        builder.Services.AddScoped&lt;ManagerTools&gt;();
+                        builder.Services.AddScoped&lt;EmployeeTools&gt;();
+                        builder.Services.AddScoped&lt;ReportTools&gt;();
+                        builder.Services.AddScoped&lt;ElicitationTools&gt;();
+                        builder.Services.AddScoped&lt;SamplingTools&gt;();
+
+                        // Database
+                        var defaultDbPath = Path.Combine(
+                            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                            &quot;MCPServerDocuments&quot;,
+                            &quot;documents.db&quot;);
+
+                        builder.Services.AddSingleton(new DatabaseConfig
+                        {
+                            ConnectionString = Environment.GetEnvironmentVariable(&quot;DB_CONNECTION_STRING&quot;) ?? defaultDbPath
+                        });
+
+                        builder.Services.AddSingleton&lt;CompanyDocumentsRepository&gt;();
+                        builder.Services.AddSingleton&lt;UserHistoryRepository&gt;();
+                        builder.Services.AddSingleton&lt;ExcelService&gt;();
+
+                        builder.Services.Configure&lt;MailgunConfig&gt;(builder.Configuration.GetSection(&quot;Mailgun&quot;));
+                        builder.Services.AddSingleton(sp =&gt; sp.GetRequiredService&lt;IOptions&lt;MailgunConfig&gt;&gt;().Value);
+                        builder.Services.AddSingleton&lt;MailgunEmailService&gt;();
+
+                        // RoleBasedToolProvider — discovers tools from assembly, filters by role
+                        builder.Services.AddSingleton&lt;RoleBasedToolProvider&gt;();
+
+                        //  MCP Server — NO .WithTools&lt;T&gt;() !!
+                        //  We use custom handlers to control what tools/list and tools/call return.
+                        //  Issue csharp-sdk#707: WithTools always appends to ListToolsHandler result.
+
+                        builder.Services
+                            .AddMcpServer()
+                            .WithHttpTransport()
+                            .WithPromptsFromAssembly()
+                            .WithResourcesFromAssembly()
+                            .WithListToolsHandler((context, cancellationToken) =&gt;
+                            {
+                                var accessor = context.Services!.GetRequiredService&lt;IHttpContextAccessor&gt;();
+                                var user = accessor.HttpContext?.Items[&quot;UserContext&quot;] as UserContext;
+                                var provider = context.Services!.GetRequiredService&lt;RoleBasedToolProvider&gt;();
+
+                                var tools = provider.GetToolsForUser(user);
+
+                                var result = new ListToolsResult
+                                {
+                                    Tools = tools.Select(t =&gt; t.ProtocolTool).ToList()
+                                };
+
+                                return ValueTask.FromResult(result);
+                            })
+                            .WithCallToolHandler(async (context, cancellationToken) =&gt;
+                            {
+                                var accessor = context.Services!.GetRequiredService&lt;IHttpContextAccessor&gt;();
+                                var user = accessor.HttpContext?.Items[&quot;UserContext&quot;] as UserContext;
+
+                                if (user is null)
+                                {
+                                    return new CallToolResult
+                                    {
+                                        IsError = true,
+                                        Content = [new TextContentBlock
+                                        {
+                                            Text = &quot;Brak autoryzacji. Wyślij nagł&#243;wek: Authorization: Bearer &lt;token&gt;&quot;
+                                        }]
+                                    };
+                                }
+
+                                var provider = context.Services!.GetRequiredService&lt;RoleBasedToolProvider&gt;();
+                                var toolName = context.Params?.Name ?? string.Empty;
+                                var tool = provider.FindTool(toolName, user);
+
+                                if (tool is null)
+                                {
+                                    return new CallToolResult
+                                    {
+                                        IsError = true,
+                                        Content = [new TextContentBlock
+                                        {
+                                            Text = $&quot;Narzędzie &#39;{toolName}&#39; nie istnieje lub nie masz do niego dostępu.&quot;
+                                        }]
+                                    };
+                                }
+
+                                return await tool.InvokeAsync(context, cancellationToken);
+                            });
+
+                        var app = builder.Build();
+
+                        // Initialize database
+                        var dbConfig = app.Services.GetRequiredService&lt;DatabaseConfig&gt;();
+                        await DatabaseInitializer.InitializeDatabaseAsync(dbConfig.ConnectionString);
+
+                        // Middleware: resolve user from Bearer token → HttpContext.Items
+                        app.Use(async (context, next) =&gt;
+                        {
+                            if (context.Request.Path.StartsWithSegments(&quot;/mcp&quot;))
+                            {
+                                var authHeader = context.Request.Headers.Authorization.FirstOrDefault();
+                                if (authHeader?.StartsWith(&quot;Bearer &quot;, StringComparison.OrdinalIgnoreCase) is true)
+                                {
+                                    var token = authHeader[&quot;Bearer &quot;.Length..];
+                                    var resolver = context.RequestServices.GetRequiredService&lt;TokenUserResolver&gt;();
+                                    var user = resolver.Resolve(token);
+
+                                    if (user is not null)
+                                    {
+                                        context.Items[&quot;UserContext&quot;] = user;
+                                    }
+                                }
+                            }
+
+                            await next();
+                        });
+
+                        // Map MCP endpoints
+                        app.MapMcp(&quot;/mcp&quot;);
+
+                        // Landing page with all endpoints
+                        app.MapGet(&quot;/&quot;, (HttpContext ctx) =&gt;
+                        {
+                            var baseUrl = $&quot;{ctx.Request.Scheme}://{ctx.Request.Host}&quot;;
+                            return Results.Content(LandingPage.Render(baseUrl), &quot;text/html&quot;);
+                        });
+
+                        // ── Health check — shows demo tokens and endpoints
+                        app.MapGet(&quot;/health&quot;, () =&gt; Results.Ok(new
+                        {
+                            status = &quot;healthy&quot;,
+                            timestamp = DateTime.UtcNow,
+                            endpoints = new
+                            {
+                                http = &quot;http://localhost:3001/mcp&quot;,
+                                https = &quot;https://localhost:3002/mcp&quot;
+                            },
+                            demo_tokens = new
+                            {
+                                manager = &quot;Bearer manager-token =&gt; Anna Kowalska (Manager) =&gt; 7 tools&quot;,
+                                employee = &quot;Bearer employee-token =&gt; Jan Nowak (Employee) =&gt; 4 tools&quot;,
+                                no_token = &quot;No header =&gt; 0 tools&quot;
+                            }
+                        }));
+
+                        // Diagnostic: who am I?
+                        app.MapGet(&quot;/whoami&quot;, (HttpContext ctx) =&gt;
+                        {
+                            var user = ctx.Items[&quot;UserContext&quot;] as UserContext;
+                            return user is not null
+                                ? Results.Ok(new { user.UserId, user.Name, Role = user.Role.ToString() })
+                                : Results.Unauthorized();
+                        });
+
+                        app.Run();
+
+                    </code>
+                </pre>
+            </div>
+        </div>
+    </section>
+    <section class="slide creammBBBGragient  deepbluetext">
+        <span class="shout colors" ><span>Przykład użytkowników jako tokeny
+        </span></span>
+    </section>
+
 
     <!-- <div class="progress"></div> -->
     <footer class="badge badge-top-left">
