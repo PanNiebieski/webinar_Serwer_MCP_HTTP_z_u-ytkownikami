@@ -2342,7 +2342,7 @@ Napiszmy serwer HTTP MCP w C# z autoryzacją użytkownika.
     <section class="slide prism over bhgry">
         <div class="grid-container">
             <div class="HeaderTitle GG"> 
-                <h2 class="headerCODE GG">UserContext coś co reprezentuje naszego użytkownika</h2>
+                <h2 class="headerCODE GG">UserRole i UserContext</h2>
             </div>
             <div class="PlaceCodeHere canscroll">
                 <pre style="font-size: 22px;overflow: hidden;  " class="language-cs">
@@ -2404,7 +2404,7 @@ Napiszmy serwer HTTP MCP w C# z autoryzacją użytkownika.
         <section class="slide prism over bhgry">
         <div class="grid-container">
             <div class="HeaderTitle GG"> 
-                <h2 class="headerCODE GG">UserContext coś co reprezentuje naszego użytkownika</h2>
+                <h2 class="headerCODE GG">ReportService</h2>
             </div>
             <div class="PlaceCodeHere canscroll">
                 <pre style="font-size: 18px;overflow: hidden;  " class="language-cs">
@@ -2601,7 +2601,7 @@ Napiszmy serwer HTTP MCP w C# z autoryzacją użytkownika.
     <section class="slide prism over bhgry">
         <div class="grid-container">
             <div class="HeaderTitle GG"> 
-                <h2 class="headerCODE GG">UserContext coś co reprezentuje naszego użytkownika</h2>
+                <h2 class="headerCODE GG">ReportTools pośrednik w [McpServerToolType]</h2>
             </div>
             <div class="PlaceCodeHere canscroll">
                 <pre style="font-size: 18px;overflow: hidden;  " class="language-cs">
@@ -2753,7 +2753,7 @@ Napiszmy serwer HTTP MCP w C# z autoryzacją użytkownika.
             <section class="slide prism over bhgry">
         <div class="grid-container">
             <div class="HeaderTitle GG"> 
-                <h2 class="headerCODE GG">UserContext coś co reprezentuje naszego użytkownika</h2>
+                <h2 class="headerCODE GG">EmployeeService , FinancialService , SalesService , TaskService</h2>
             </div>
             <div class="PlaceCodeHere canscroll">
                 <pre style="font-size: 17px;overflow: hidden;  " class="language-cs">
@@ -2878,7 +2878,6 @@ Napiszmy serwer HTTP MCP w C# z autoryzacją użytkownika.
                             string Currency);
 
 
-                        namespace CompanyDocuments.Common.Services;
 
                         public sealed class TaskService
                         {
@@ -2927,7 +2926,7 @@ Napiszmy serwer HTTP MCP w C# z autoryzacją użytkownika.
         <section class="slide prism over bhgry">
         <div class="grid-container">
             <div class="HeaderTitle GG"> 
-                <h2 class="headerCODE GG">UserContext coś co reprezentuje naszego użytkownika</h2>
+                <h2 class="headerCODE GG">RequireRoleAttribute</h2>
             </div>
             <div class="PlaceCodeHere canscroll">
                 <pre style="font-size: 24px;overflow: hidden;  " class="language-cs">
@@ -2956,7 +2955,7 @@ Napiszmy serwer HTTP MCP w C# z autoryzacją użytkownika.
             <section class="slide prism over bhgry">
         <div class="grid-container">
             <div class="HeaderTitle GG"> 
-                <h2 class="headerCODE GG">MCP wydzielone w zależności od roli</h2>
+                <h2 class="headerCODE GG">MCP wydzielone w zależności od roli : ManagerTools, EmployeeTools</h2>
             </div>
             <div class="PlaceCodeHere canscroll">
                 <pre style="font-size: 16px;overflow: hidden;  " class="language-cs">
@@ -3257,7 +3256,7 @@ Napiszmy serwer HTTP MCP w C# z autoryzacją użytkownika.
                                     ?.Tool;
                             }
 
-                            // ── Discovery ──────────────────────────────────────────────
+                            // Discovery 
 
                             private static List&lt;ToolEntry&gt; DiscoverTools(IServiceProvider serviceProvider)
                             {
@@ -3326,7 +3325,7 @@ Napiszmy serwer HTTP MCP w C# z autoryzacją użytkownika.
             <section class="slide prism over bhgry">
         <div class="grid-container">
             <div class="HeaderTitle GG"> 
-                <h2 class="headerCODE GG">UserContext coś co reprezentuje naszego użytkownika</h2>
+                <h2 class="headerCODE GG">Demo TokenUserResolver</h2>
             </div>
             <div class="PlaceCodeHere canscroll">
                 <pre style="font-size: 20px;overflow: hidden;  " class="language-cs">
@@ -3379,7 +3378,7 @@ Napiszmy serwer HTTP MCP w C# z autoryzacją użytkownika.
                 <section class="slide prism over bhgry">
         <div class="grid-container">
             <div class="HeaderTitle GG"> 
-                <h2 class="headerCODE GG">UserContext coś co reprezentuje naszego użytkownika</h2>
+                <h2 class="headerCODE GG">Program.cs</h2>
             </div>
             <div class="PlaceCodeHere canscroll">
                 <pre style="font-size: 20px;overflow: hidden;  " class="language-cs">
