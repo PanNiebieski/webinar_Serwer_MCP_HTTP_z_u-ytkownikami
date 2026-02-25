@@ -3913,6 +3913,526 @@ Napiszmy serwer HTTP MCP w C# z autoryzacją użytkownika.
             <figcaption class="white">CW</figcaption>
         </figure>
     </section>
+                <section class="slide prism over bhgry">
+        <div class="grid-container">
+            <div class="HeaderTitle GG"> 
+                <h2 class="headerCODE GG">Program.cs</h2>
+            </div>
+            <div class="PlaceCodeHere canscroll">
+                <pre style="font-size: 14px;overflow: hidden;  " class="language-cs">
+                    <code style="line-height:14px !important;">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                        using CompanyDocuments.BaseMCP;
+                        using CompanyDocuments.Common.Database;
+                        using CompanyDocuments.Common.Services;
+                        using CompanyDocuments.MCPWebAuth2.Auth;
+                        using Microsoft.AspNetCore.Authentication.JwtBearer;
+                        using Microsoft.Extensions.Options;
+                        using Microsoft.IdentityModel.Tokens;
+                        using ModelContextProtocol.Protocol;
+                        using System.Security.Claims;
+
+                        var builder = WebApplication.CreateBuilder(args);
+
+                        //  1. Authentication: JWT Bearer (tokens issued by our demo OAuth server)
+
+                        var serverUrl = builder.Configuration[&quot;ServerUrl&quot;] ?? &quot;http://localhost:3001&quot;;
+
+                        // Important it didnt work without CORS
+                        // the browser would block the response from /token endpoint and the client would never receive the access token
+                        builder.Services.AddCors(options =&gt;
+                        {
+                            options.AddDefaultPolicy(policy =&gt;
+                            {
+                                policy.AllowAnyOrigin()
+                                    .AllowAnyHeader()
+                                    .AllowAnyMethod();
+                            });
+                        });
+
+
+                        builder.Services
+                            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                            .AddJwtBearer(options =&gt;
+                            {
+                                options.TokenValidationParameters = new TokenValidationParameters
+                                {
+                                    ValidateIssuer = true,
+                                    ValidIssuer = DemoOAuthServer.Issuer,
+                                    ValidateAudience = true,
+                                    ValidAudience = DemoOAuthServer.Audience,
+                                    ValidateLifetime = true,
+                                    ValidateIssuerSigningKey = true,
+                                    IssuerSigningKey = DemoOAuthServer.SigningKey,
+                                };
+                            })
+                            // MCP Auth scheme: serves /.well-known/oauth-protected-resource
+                            // and adds resource_metadata URI to WWW-Authenticate challenges
+                            .AddMcp(options =&gt;
+                            {
+                                options.ResourceMetadata = new()
+                                {
+                                    Resource = new Uri($&quot;{serverUrl}/mcp&quot;),
+                                    AuthorizationServers = { new Uri(serverUrl) },
+                                    ScopesSupported = { &quot;mcp:tools&quot;, &quot;mcp:resources&quot; },
+                                };
+                            });
+
+                        builder.Services.AddAuthorization();
+                        builder.Services.AddHttpContextAccessor();
+
+                        //  2. Business services (reused from your existing projects)
+
+                        builder.Services.AddSingleton&lt;TokenUserResolver&gt;();
+                        builder.Services.AddSingleton&lt;SalesService&gt;();
+                        builder.Services.AddSingleton&lt;EmployeeService&gt;();
+                        builder.Services.AddSingleton&lt;FinancialService&gt;();
+                        builder.Services.AddSingleton&lt;TaskService&gt;();
+                        builder.Services.AddSingleton&lt;ReportService&gt;();
+
+                        builder.Services.AddScoped&lt;ManagerTools&gt;();
+                        builder.Services.AddScoped&lt;EmployeeTools&gt;();
+                        builder.Services.AddScoped&lt;ReportTools&gt;();
+                        builder.Services.AddScoped&lt;ElicitationTools&gt;();
+                        builder.Services.AddScoped&lt;SamplingTools&gt;();
+
+                        // Database
+                        var defaultDbPath = Path.Combine(
+                            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                            &quot;MCPServerDocuments&quot;, &quot;documents.db&quot;);
+
+                        builder.Services.AddSingleton(new DatabaseConfig
+                        {
+                            ConnectionString = Environment.GetEnvironmentVariable(&quot;DB_CONNECTION_STRING&quot;) ?? defaultDbPath
+                        });
+
+                        builder.Services.AddSingleton&lt;CompanyDocumentsRepository&gt;();
+                        builder.Services.AddSingleton&lt;UserHistoryRepository&gt;();
+                        builder.Services.AddSingleton&lt;ExcelService&gt;();
+
+                        builder.Services.Configure&lt;MailgunConfig&gt;(builder.Configuration.GetSection(&quot;Mailgun&quot;));
+                        builder.Services.AddSingleton(sp =&gt; sp.GetRequiredService&lt;IOptions&lt;MailgunConfig&gt;&gt;().Value);
+                        builder.Services.AddSingleton&lt;MailgunEmailService&gt;();
+
+                        // Role-based tool provider
+                        builder.Services.AddSingleton&lt;RoleBasedToolProvider&gt;();
+
+                        //  3. MCP Server — with HTTP transport + role-based tool filtering
+                        //     Using custom handlers (same pattern as MCPWeb project)
+
+                        builder.Services
+                            .AddMcpServer()
+                            .WithHttpTransport()
+                            .WithPromptsFromAssembly()
+                            .WithResourcesFromAssembly()
+                            .WithListToolsHandler((context, cancellationToken) =&gt;
+                            {
+                                var user = ResolveUserFromClaims(context.Services!);
+                                var provider = context.Services!.GetRequiredService&lt;RoleBasedToolProvider&gt;();
+                                var tools = provider.GetToolsForUser(user);
+
+                                return ValueTask.FromResult(new ListToolsResult
+                                {
+                                    Tools = tools.Select(t =&gt; t.ProtocolTool).ToList()
+                                });
+                            })
+                            .WithCallToolHandler(async (context, cancellationToken) =&gt;
+                            {
+                                var user = ResolveUserFromClaims(context.Services!);
+
+                                if (user is null)
+                                {
+                                    return new CallToolResult
+                                    {
+                                        IsError = true,
+                                        Content = [new TextContentBlock
+                                        {
+                                            Text = &quot;Brak autoryzacji. Zaloguj się przez OAuth 2.0 flow.&quot;
+                                        }]
+                                    };
+                                }
+
+                                var provider = context.Services!.GetRequiredService&lt;RoleBasedToolProvider&gt;();
+                                var toolName = context.Params?.Name ?? string.Empty;
+                                var tool = provider.FindTool(toolName, user);
+
+                                if (tool is null)
+                                {
+                                    return new CallToolResult
+                                    {
+                                        IsError = true,
+                                        Content = [new TextContentBlock
+                                        {
+                                            Text = $&quot;Narzędzie &#39;{toolName}&#39; nie istnieje lub nie masz do niego dostępu.&quot;
+                                        }]
+                                    };
+                                }
+
+                                return await tool.InvokeAsync(context, cancellationToken);
+                            });
+
+                        var app = builder.Build();
+
+                        //  4. Initialize database
+
+                        var dbConfig = app.Services.GetRequiredService&lt;DatabaseConfig&gt;();
+                        await DatabaseInitializer.InitializeDatabaseAsync(dbConfig.ConnectionString);
+
+                        //  5. Middleware pipeline
+
+                        app.UseCors();
+                        app.UseAuthentication();
+                        app.UseAuthorization();
+
+                        // Resolve UserContext from JWT claims (for MCP tool handlers)
+                        app.Use(async (context, next) =&gt;
+                        {
+                            if (context.Request.Path.StartsWithSegments(&quot;/mcp&quot;) &amp;&amp; context.User.Identity?.IsAuthenticated == true)
+                            {
+                                var role = context.User.FindFirst(ClaimTypes.Role)?.Value ?? &quot;Employee&quot;;
+                                var name = context.User.FindFirst(ClaimTypes.Name)?.Value
+                                        ?? context.User.FindFirst(&quot;name&quot;)?.Value
+                                        ?? &quot;Unknown&quot;;
+                                var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                                        ?? context.User.FindFirst(&quot;sub&quot;)?.Value
+                                        ?? &quot;0&quot;;
+
+                                context.Items[&quot;UserContext&quot;] = new UserContext
+                                {
+                                    UserId = userId,
+                                    Name = name,
+                                    Role = Enum.TryParse&lt;UserRole&gt;(role, true, out var r) ? r : UserRole.Employee
+                                };
+                            }
+                            await next();
+                        });
+
+                        //  6. Map endpoints
+
+                        // OAuth 2.0 Authorization Server endpoints
+                        DemoOAuthServer.MapOAuthEndpoints(app, serverUrl);
+
+                        // MCP endpoint (protected by JWT auth)
+                        app.MapMcp(&quot;/mcp&quot;);
+
+                        // Landing page
+                        app.MapGet(&quot;/&quot;, (HttpContext ctx) =&gt;
+                        {
+                            var baseUrl = $&quot;{ctx.Request.Scheme}://{ctx.Request.Host}&quot;;
+                            return Results.Content(OAuth2LandingPage.Render(baseUrl), &quot;text/html&quot;);
+                        });
+
+                        // Health check
+                        app.MapGet(&quot;/health&quot;, () =&gt; Results.Ok(new
+                        {
+                            status = &quot;healthy&quot;,
+                            timestamp = DateTime.UtcNow,
+                            auth = &quot;OAuth 2.0 Authorization Code + PKCE&quot;,
+                            endpoints = new
+                            {
+                                mcp = $&quot;{serverUrl}/mcp&quot;,
+                                authorize = $&quot;{serverUrl}/authorize&quot;,
+                                token = $&quot;{serverUrl}/token&quot;,
+                                metadata = $&quot;{serverUrl}/.well-known/oauth-authorization-server&quot;,
+                                resource_metadata = $&quot;{serverUrl}/.well-known/oauth-protected-resource&quot;,
+                            },
+                            demo_users = new
+                            {
+                                manager = &quot;anna / pass → Manager role → 7 tools&quot;,
+                                employee = &quot;jan / pass → Employee role → 4 tools&quot;,
+                            }
+                        }));
+
+                        // Who am I (from JWT)
+                        app.MapGet(&quot;/whoami&quot;, (HttpContext ctx) =&gt;
+                        {
+                            var user = ctx.Items[&quot;UserContext&quot;] as UserContext;
+                            if (user is not null)
+                                return Results.Ok(new { user.UserId, user.Name, Role = user.Role.ToString() });
+
+                            if (ctx.User.Identity?.IsAuthenticated == true)
+                                return Results.Ok(new
+                                {
+                                    sub = ctx.User.FindFirst(&quot;sub&quot;)?.Value,
+                                    name = ctx.User.FindFirst(&quot;name&quot;)?.Value,
+                                    role = ctx.User.FindFirst(ClaimTypes.Role)?.Value,
+                                });
+
+                            return Results.Unauthorized();
+                        }).RequireAuthorization();
+
+                        app.Run();
+
+
+                        static UserContext? ResolveUserFromClaims(IServiceProvider services)
+                        {
+                            var accessor = services.GetRequiredService&lt;IHttpContextAccessor&gt;();
+                            var httpContext = accessor.HttpContext;
+
+                            if (httpContext?.Items[&quot;UserContext&quot;] is UserContext uc)
+                                return uc;
+
+                            var principal = httpContext?.User;
+                            if (principal?.Identity?.IsAuthenticated != true)
+                                return null;
+
+                            var role = principal.FindFirst(ClaimTypes.Role)?.Value ?? &quot;Employee&quot;;
+                            var name = principal.FindFirst(ClaimTypes.Name)?.Value
+                                    ?? principal.FindFirst(&quot;name&quot;)?.Value
+                                    ?? &quot;Unknown&quot;;
+                            var userId = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                                    ?? principal.FindFirst(&quot;sub&quot;)?.Value
+                                    ?? &quot;0&quot;;
+
+                            return new UserContext
+                            {
+                                UserId = userId,
+                                Name = name,
+                                Role = Enum.TryParse&lt;UserRole&gt;(role, true, out var r) ? r : UserRole.Employee
+                            };
+                        }
+                                
+                    </code>
+                </pre>
+            </div>
+        </div>
+    </section>
             <section class="slide creammBBBGragient  deepbluetext">
         <span class="shout colors" ><span>Czy to działa dla aplikacji?
         </span></span>
